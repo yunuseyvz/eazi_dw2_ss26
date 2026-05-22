@@ -33,10 +33,10 @@ export default function Home() {
   const errorCount = useRef(0);
   const prevDetected = useRef(false);
 
-  // Sound cue + spoken message on new detection
+  // Sound cue on new detection
   useEffect(() => {
     if (detected && !prevDetected.current) {
-      // 1. Play chime (two-tone E5→C5, like a doorbell)
+      // Play chime (two-tone E5→C5, like a doorbell)
       try {
         const ctx = new AudioContext();
         [659.25, 523.25].forEach((freq, i) => {
@@ -52,23 +52,6 @@ export default function Home() {
         });
         setTimeout(() => ctx.close(), 1000);
       } catch { /* audio unavailable */ }
-
-      // 2. Spoken message after chime finishes
-      setTimeout(() => {
-        try {
-          const types = detectedTypes.length > 0 ? detectedTypes : ['wheelchair'];
-          const labelMap: Record<string, string> = {
-            wheelchair: 'Rollstuhl', stroller: 'Kinderwagen',
-            mobility_aid: 'Gehhilfe', senior: 'Senior', pregnant: 'Schwangere',
-          };
-          const labels = types.map((t: string) => labelMap[t] || t).join(' und ');
-          const msg = `Achtung. ${labels} im Eingangsbereich erkannt. Aufzug wird priorisiert.`;
-          const utterance = new SpeechSynthesisUtterance(msg);
-          utterance.lang = 'de-DE';
-          utterance.rate = 0.9;
-          speechSynthesis.speak(utterance);
-        } catch { /* speech unavailable */ }
-      }, 800);
     }
     prevDetected.current = detected;
   }, [detected, detectedTypes]);
