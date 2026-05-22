@@ -52,3 +52,9 @@ HF_HOME/
 htmlcov/
 .coverage
 coverage.xml
+
+# Node.js / Next.js
+node_modules/
+.next/
+out/
+*.tsbuildinfo

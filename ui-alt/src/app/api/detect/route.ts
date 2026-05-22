@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import sharp from 'sharp';
 
-const DETECT_API_URL = process.env.DETECT_API_URL || 'http://localhost:1234';
+const DETECT_API_URL = process.env.DETECT_API_URL || 'http://192.168.178.20:1234';
 const DETECT_MODEL = process.env.DETECT_MODEL || 'google/gemma-4-e4b';
 
 const SYSTEM_PROMPT = `## Role
