@@ -9,6 +9,7 @@ export default function Home() {
   const [detectedTypes, setDetectedTypes] = useState<string[]>([]);
   const [lastDetectedAt, setLastDetectedAt] = useState<number>(0);
   const [scanning, setScanning] = useState(true);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const isRequesting = useRef(false);
   const prevDetected = useRef(false);
 
@@ -83,16 +84,6 @@ export default function Home() {
     setLastDetectedAt(Date.now());
   };
 
-  const handleStop = () => {
-    setScanning(false);
-    setDetected(false);
-    setDetectedTypes([]);
-  };
-
-  const handleStart = () => {
-    setScanning(true);
-  };
-
   const bgColor = detected
     ? '#f5c842' // yellowish
     : '#87CEEB'; // light blue
@@ -103,7 +94,7 @@ export default function Home() {
       style={{ backgroundColor: bgColor }}
     >
       {/* Hidden webcam capture */}
-      <WebcamCapture onFrame={handleFrame} intervalMs={2500} enabled={scanning} />
+      <WebcamCapture onFrame={handleFrame} intervalMs={2500} enabled={scanning} facingMode={facingMode} />
 
       {/* Center icon */}
       <div className="flex flex-col items-center gap-6 select-none">
@@ -137,30 +128,27 @@ export default function Home() {
       </div>
 
       {/* Bottom buttons */}
-      <div className="fixed bottom-8 flex gap-4">
-        {scanning ? (
-          <button
-            onClick={handleStop}
-            className="px-8 py-3 rounded-xl text-base font-semibold shadow-lg transition-transform active:scale-95"
-            style={{ background: 'rgba(0,0,0,0.15)', color: '#1a1a1a' }}
-          >
-            ⏹ Stop
-          </button>
-        ) : (
-          <button
-            onClick={handleStart}
-            className="px-8 py-3 rounded-xl text-base font-semibold shadow-lg transition-transform active:scale-95"
-            style={{ background: 'rgba(255,255,255,0.4)', color: '#1a1a1a' }}
-          >
-            ▶ Start
-          </button>
-        )}
+      <div className="fixed bottom-8 flex gap-3">
         <button
-          onClick={handleSimulate}
-          className="px-8 py-3 rounded-xl text-base font-semibold shadow-lg transition-transform active:scale-95"
+          onClick={() => setScanning((s) => !s)}
+          className="px-6 py-3 rounded-xl text-sm font-semibold shadow-lg transition-transform active:scale-95"
           style={{ background: 'rgba(0,0,0,0.15)', color: '#1a1a1a' }}
         >
-          🦽 Simulieren
+          {scanning ? '⏸ Stop' : '▶ Scan'}
+        </button>
+        <button
+          onClick={() => setFacingMode((m) => (m === 'user' ? 'environment' : 'user'))}
+          className="px-6 py-3 rounded-xl text-sm font-semibold shadow-lg transition-transform active:scale-95"
+          style={{ background: 'rgba(0,0,0,0.15)', color: '#1a1a1a' }}
+        >
+          {facingMode === 'user' ? '🤳 Front' : '📷 Back'}
+        </button>
+        <button
+          onClick={handleSimulate}
+          className="px-6 py-3 rounded-xl text-sm font-semibold shadow-lg transition-transform active:scale-95"
+          style={{ background: 'rgba(0,0,0,0.15)', color: '#1a1a1a' }}
+        >
+          🦽 Fake
         </button>
       </div>
     </div>

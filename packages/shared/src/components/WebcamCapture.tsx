@@ -6,18 +6,25 @@ interface Props {
   onFrame: (base64Image: string) => void;
   intervalMs?: number;
   enabled?: boolean;
+  /** 'user' = front/selfie camera, 'environment' = back/world camera */
+  facingMode?: 'user' | 'environment';
 }
 
-export default function WebcamCapture({ onFrame, intervalMs = 2500, enabled = true }: Props) {
+export default function WebcamCapture({
+  onFrame,
+  intervalMs = 2500,
+  enabled = true,
+  facingMode = 'environment',
+}: Props) {
   const streamRef = useRef<MediaStream | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
-  const startCapture = useCallback(async () => {
+  const startCapture = useCallback(async (mode: 'user' | 'environment') => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment', width: 640, height: 480 },
+        video: { facingMode: mode, width: 640, height: 480 },
         audio: false,
       });
       streamRef.current = stream;
@@ -68,13 +75,13 @@ export default function WebcamCapture({ onFrame, intervalMs = 2500, enabled = tr
 
   useEffect(() => {
     if (enabled) {
-      startCapture();
+      startCapture(facingMode);
       intervalRef.current = setInterval(captureFrame, intervalMs);
     } else {
       stopCapture();
     }
     return () => stopCapture();
-  }, [enabled, intervalMs, startCapture, stopCapture, captureFrame]);
+  }, [enabled, facingMode, intervalMs, startCapture, stopCapture, captureFrame]);
 
   return null;
 }

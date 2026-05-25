@@ -29,6 +29,7 @@ export default function Home() {
   const [lastRawResponse, setLastRawResponse] = useState('');
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'unknown'>('unknown');
   const [scanning, setScanning] = useState(true);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('environment');
   const isRequesting = useRef(false);
   const errorCount = useRef(0);
   const prevDetected = useRef(false);
@@ -177,7 +178,7 @@ export default function Home() {
       <Header now={now} />
 
       <main className="flex-1 p-5 flex flex-col gap-4 max-w-[640px] w-full mx-auto">
-        <WebcamCapture onFrame={handleFrame} intervalMs={2500} enabled={scanning} />
+        <WebcamCapture onFrame={handleFrame} intervalMs={2500} enabled={scanning} facingMode={facingMode} />
 
         <DetectionBanner detected={detected} types={detectedTypes} />
 
@@ -219,6 +220,12 @@ Priority lane is always visible to show who gets prioritized, but the active IDs
             className="py-1.5 px-3 rounded-lg text-[11px] font-semibold border border-[#d9d9d9] bg-white text-[#5a5a5a] hover:bg-[#f5f5f5] transition-colors"
           >
             {scanning ? '⏸ Stop' : '▶ Scan'}
+          </button>
+          <button
+            onClick={() => setFacingMode((m) => (m === 'user' ? 'environment' : 'user'))}
+            className="py-1.5 px-3 rounded-lg text-[11px] font-semibold border border-[#d9d9d9] bg-white text-[#5a5a5a] hover:bg-[#f5f5f5] transition-colors"
+          >
+            {facingMode === 'user' ? '🤳 Front' : '📷 Back'}
           </button>
           <button
             onClick={handleFakeDetection}
