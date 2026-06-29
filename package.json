@@ -8,8 +8,10 @@
   "scripts": {
     "dev:alt": "npm -w apps/alt run dev",
     "dev:mvg": "npm -w apps/mvg run dev",
+    "dev:led": "npm -w apps/led run dev",
     "build:alt": "npm -w apps/alt run build",
     "build:mvg": "npm -w apps/mvg run build",
-    "lint": "npm -w apps/alt run lint && npm -w apps/mvg run lint"
+    "build:led": "npm -w apps/led run build",
+    "lint": "npm -w apps/alt run lint && npm -w apps/mvg run lint && npm -w apps/led run lint"
   }
 }
