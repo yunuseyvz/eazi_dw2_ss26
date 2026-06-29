@@ -1,0 +1,263 @@
+/*
+ * ui.h — Embedded web UI for the LED controller.
+ * Served at /ui by the ESP32. Single-page vanilla HTML/CSS/JS,
+ * no external dependencies. Talks to the same /state endpoint as
+ * the Next.js app (led_control_ui/).
+ */
+#pragma once
+
+const char UI_HTML[] PROGMEM = R"rawliteral(
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="theme-color" content="#1a1a1a">
+<title>LED-Steuerung</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;background:#f5f5f5;color:#1a1a1a;max-width:640px;margin:0 auto;padding:0 20px 20px;min-height:100vh;display:flex;flex-direction:column;gap:16px}
+header{background:#1a1a1a;color:#fff;padding:16px 20px;margin:0 -20px;display:flex;align-items:center;gap:12px}
+header .logo{background:#fff;color:#1a1a1a;font-weight:800;font-size:14px;padding:4px 10px;border-radius:4px;letter-spacing:1px;line-height:1}
+header span{font-size:15px;font-weight:600}
+.cycle{width:100%;padding:40px 20px;border:none;border-radius:16px;font-size:28px;font-weight:800;cursor:pointer;transition:background .35s,color .35s,border-color .35s;border:2px solid;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.cycle:disabled{opacity:.5;cursor:not-allowed}
+.cycle .sub{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:1px;opacity:.8;margin-top:8px}
+details{background:#fff;border:1px solid #e5e5e5;border-radius:12px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+summary{cursor:pointer;padding:16px 20px;font-weight:700;font-size:15px;list-style:none;display:flex;align-items:center;gap:12px;user-select:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:'\203A';font-size:20px;font-weight:700;transition:transform .2s;color:#5a5a5a}
+details[open] summary::before{transform:rotate(90deg)}
+details .body{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
+.hint{font-size:12px;color:#8a8a8a;padding:4px 4px 0}
+.card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
+.card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.card-h .name{font-weight:700;font-size:15px}
+.toggle{position:relative;display:inline-block;width:48px;height:28px;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .slider{position:absolute;inset:0;background:#d9d9d9;border-radius:14px;transition:background .2s}
+.toggle .slider::before{content:'';position:absolute;height:20px;width:20px;left:4px;top:4px;background:#fff;border-radius:50%;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s}
+.toggle input:checked+.slider{background:var(--accent,#0068b4)}
+.toggle input:checked+.slider::before{left:24px}
+.controls{display:flex;align-items:center;gap:12px}
+.color-pick{width:40px;height:40px;border:1px solid #d9d9d9;border-radius:6px;cursor:pointer;padding:0;background:none;flex-shrink:0}
+.color-pick:disabled{opacity:.5}
+.effects{display:flex;flex-wrap:wrap;gap:6px;flex:1}
+.effects button{flex:1;min-width:0;padding:6px 8px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:#f0f0f0;color:#5a5a5a;transition:background .15s,color .15s}
+.effects button:disabled{opacity:.5;cursor:not-allowed}
+.effects button.active{color:#fff}
+.range-row{display:flex;align-items:center;gap:12px}
+.range-row label{font-weight:700;font-size:15px;white-space:nowrap}
+.range-row .val{font-size:12px;font-weight:600;color:#5a5a5a;font-variant-numeric:tabular-nums}
+input[type=range]{flex:1;accent-color:#0068b4}
+input[type=number]{width:96px;padding:8px 12px;border:1px solid #d9d9d9;border-radius:6px;font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+.conn{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:1px}
+.conn .dot{width:8px;height:8px;border-radius:50%;background:#8a8a8a}
+.conn.ok .dot{background:#008754}.conn.ok{color:#008754}
+.conn.err .dot{background:#c1121c}.conn.err{color:#c1121c}
+footer{margin-top:auto;padding-top:12px;text-align:center;font-size:12px;color:#8a8a8a;font-weight:500}
+footer .raw{display:block;margin-bottom:6px;font-size:11px;font-family:monospace;color:#8a8a8a;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+</style>
+</head>
+<body>
+<header>
+<div class="logo">LED</div>
+<span>Board-Prototyp</span>
+</header>
+
+<button id="cycle" class="cycle" onclick="cycleState()">
+<div class="lbl">AUS</div>
+<div class="sub">Lade…</div>
+</button>
+
+<details>
+<summary>Individuell</summary>
+<div class="body">
+<p class="hint">Aenderungen hier ueberschreiben den Cycle-Modus. Ein Tippen auf den Cycle-Button setzt wieder die festen Presets.</p>
+<div class="card" id="s1-card" style="--accent:#0068b4">
+<div class="card-h"><span class="name">Strip 1 &mdash; Umrandung</span>
+<label class="toggle"><input type="checkbox" id="s1_on" onchange="toggleStrip(1)"><span class="slider"></span></label>
+</div>
+<div class="controls">
+<input type="color" class="color-pick" id="s1_color" onchange="setStripColor(1,this.value)">
+<div class="effects" id="s1_effects"></div>
+</div>
+</div>
+<div class="card" id="s2-card" style="--accent:#f5c842">
+<div class="card-h"><span class="name">Strip 2 &mdash; Querstreifen</span>
+<label class="toggle"><input type="checkbox" id="s2_on" onchange="toggleStrip(2)"><span class="slider"></span></label>
+</div>
+<div class="controls">
+<input type="color" class="color-pick" id="s2_color" onchange="setStripColor(2,this.value)">
+<div class="effects" id="s2_effects"></div>
+</div>
+</div>
+<div class="card" id="s3-card" style="--accent:#1a1a1a">
+<div class="card-h"><span class="name">Strip 3 &mdash; Rollstuhl-Symbol</span>
+<label class="toggle"><input type="checkbox" id="s3_on" onchange="toggleStrip(3)"><span class="slider"></span></label>
+</div>
+<div class="controls">
+<div class="effects" id="s3_effects"></div>
+</div>
+<p style="font-size:11px;color:#8a8a8a;margin-top:8px">Schaltstreifen (via Relais) &mdash; nur AN/AUS/Effekt, keine Farbe.</p>
+</div>
+</div>
+</details>
+
+<details>
+<summary>Einstellungen</summary>
+<div class="body">
+<p class="hint">Gelten nur fuer Strip 1 und 2 (WS2812B). Strip 3 ist ein Relais-Streifen ohne digitale LEDs.</p>
+<div class="card">
+<div class="range-row"><label>Helligkeit</label><input type="range" id="brightness" min="0" max="255" onchange="setBrightness(this.value)"><span class="val" id="brightness-val">40/255</span></div>
+</div>
+<div class="card">
+<div class="range-row"><label>LED-Anzahl</label><input type="number" id="numPixels" min="1" max="2000" onchange="setNumPixels(this.value)"></div>
+</div>
+</div>
+</details>
+
+<div class="conn" id="conn"><span class="dot"></span><span id="conn-text">Verbinde...</span></div>
+
+<footer>
+<span class="raw" id="raw">Ziel: selbes Geraet</span>
+Prototyp &mdash; Design Workshop 2
+</footer>
+
+<script>
+const LBL={0:'AUS',1:'Kein Bedarf',2:'Rollstuhlfahrer'};
+const SUB={0:'Tippen fuer Kein Bedarf',1:'Querstreifen weiss \u2014 Tippen fuer Rollstuhlfahrer',2:'Umrandung + Symbol \u2014 Tippen fuer AUS'};
+const BG={0:'#1a1a1a',1:'#f5c842',2:'#0068b4'};
+const FG={0:'#fff',1:'#5a3e0a',2:'#fff'};
+const ACC=['#0068b4','#f5c842','#1a1a1a'];
+const EFF=[{id:'solid',l:'Statisch'},{id:'blink',l:'Blinken'},{id:'fade',l:'Atmen'},{id:'chase',l:'Lauflicht'},{id:'rainbow',l:'Regenbogen'}];
+const SEFF=[{id:'solid',l:'Statisch'},{id:'blink',l:'Blinken'}];
+const VAL=['solid','blink','fade','chase','rainbow'];
+let st={state:1,brightness:40,numPixels:1000,s1:{on:true,color:[0,0,255],effect:'solid'},s2:{on:true,color:[255,255,255],effect:'solid'},s3:{on:true,color:[0,0,0],effect:'solid'}};
+let busy=false;
+
+function rgb2hex(a){return'#'+a.map(function(n){return('0'+Math.max(0,Math.min(255,n|0)).toString(16)).slice(-2)}).join('')}
+function hex2rgb(h){var m=/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h);return m?[parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)]:[0,0,0]}
+function norm(d){
+  if(!d)d={};
+  var s=(d.state===0||d.state===1||d.state===2)?d.state:1;
+  var b=typeof d.brightness==='number'?d.brightness:40;
+  var n=typeof d.numPixels==='number'&&d.numPixels>0?d.numPixels:1000;
+  function mk(k,fb){
+    var src=d[k]||{};
+    var e=src.effect||fb.effect;
+    if(VAL.indexOf(e)<0)e='solid';
+    return{on:typeof src.on==='boolean'?src.on:fb.on,color:Array.isArray(src.color)&&src.color.length===3?src.color.map(function(x){return x|0}):fb.color,effect:e};
+  }
+  return{state:s,brightness:b,numPixels:n,s1:mk('s1',{on:true,color:[0,0,255],effect:'solid'}),s2:mk('s2',{on:true,color:[255,255,255],effect:'solid'}),s3:mk('s3',{on:true,color:[0,0,0],effect:'solid'})};
+}
+
+async function fetchState(){
+  try{
+    var r=await fetch('/state');
+    if(!r.ok){conn('err','HTTP '+r.status);return}
+    var d=await r.json();
+    st=norm(d);render();conn('ok','ESP verbunden');
+    document.getElementById('raw').textContent=JSON.stringify(d);
+  }catch(e){conn('err','Getrennt')}
+}
+
+async function send(body){
+  if(busy)return;
+  busy=true;document.getElementById('cycle').disabled=true;
+  try{
+    var r=await fetch('/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+    if(!r.ok){conn('err','HTTP '+r.status);return}
+    var d=await r.json();st=norm(d);render();conn('ok','ESP verbunden');
+    document.getElementById('raw').textContent=JSON.stringify(d);
+  }catch(e){conn('err',e.message||'Fehler')}
+  finally{busy=false;document.getElementById('cycle').disabled=false}
+}
+
+function conn(type,text){
+  var c=document.getElementById('conn'),t=document.getElementById('conn-text');
+  c.className='conn '+(type==='ok'?'ok':type==='err'?'err':'');
+  t.textContent=text;
+}
+
+function cycleState(){
+  var next=(st.state+1)%3;
+  send({state:next});
+}
+
+function toggleStrip(n){
+  var on=!st['s'+n].on;
+  send({'s'+n+'_on':on});
+}
+
+function setStripColor(n,hex){
+  send({'s'+n+'_color':hex2rgb(hex)});
+}
+
+function setStripEffect(n,effect){
+  send({'s'+n+'_effect':effect});
+}
+
+function setBrightness(v){
+  send({brightness:parseInt(v,10)});
+}
+
+function setNumPixels(v){
+  var n=parseInt(v,10);
+  if(!isNaN(n)&&n>0)send({numPixels:n});
+}
+
+function buildEffects(containerId,stripNum,effects){
+  var c=document.getElementById(containerId);c.innerHTML='';
+  effects.forEach(function(e){
+    var b=document.createElement('button');
+    b.textContent=e.l;
+    b.dataset.effect=e.id;
+    b.onclick=function(){setStripEffect(stripNum,e.id)};
+    c.appendChild(b);
+  });
+}
+
+buildEffects('s1_effects',1,EFF);
+buildEffects('s2_effects',2,EFF);
+buildEffects('s3_effects',3,SEFF);
+
+function render(){
+  var cy=document.getElementById('cycle');
+  cy.style.background=BG[st.state];cy.style.color=FG[st.state];cy.style.borderColor=BG[st.state];
+  cy.querySelector('.lbl').textContent=LBL[st.state];
+  cy.querySelector('.sub').textContent=SUB[st.state];
+
+  for(var n=1;n<=3;n++){
+    var cfg=st['s'+n];
+    var onEl=document.getElementById('s'+n+'_on');
+    if(onEl)onEl.checked=cfg.on;
+    var colEl=document.getElementById('s'+n+'_color');
+    if(colEl)colEl.value=rgb2hex(cfg.color);
+    var effContainer=document.getElementById('s'+n+'_effects');
+    if(effContainer){
+      var btns=effContainer.querySelectorAll('button');
+      var accent=ACC[n-1];
+      for(var i=0;i<btns.length;i++){
+        if(btns[i].dataset.effect===cfg.effect){btns[i].classList.add('active');btns[i].style.background=accent;btns[i].style.color='#fff'}
+        else{btns[i].classList.remove('active');btns[i].style.background='#f0f0f0';btns[i].style.color='#5a5a5a'}
+      }
+    }
+    var card=document.getElementById('s'+n+'-card');
+    if(card){
+      var toggle=card.querySelector('.toggle input');
+      if(toggle)toggle.checked=cfg.on;
+    }
+  }
+
+  var br=document.getElementById('brightness');
+  if(br){br.value=st.brightness;document.getElementById('brightness-val').textContent=st.brightness+'/255'}
+  var np=document.getElementById('numPixels');
+  if(np)np.value=st.numPixels;
+}
+
+fetchState();
+</script>
+</body>
+</html>
+)rawliteral";

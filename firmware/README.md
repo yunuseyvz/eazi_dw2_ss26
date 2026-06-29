@@ -97,8 +97,8 @@ Strip 3 (relay) only honours `solid` and `blink`; other effect strings fall back
 ## Connect
 
 1. From your phone/laptop, join WiFi: **`Aufzug-Demo`** / password **`demo1234`**.
-2. Open <http://192.168.4.1/> to verify the controller is up (plain-text help).
-3. Use the `@aufzug/led` app (`npm run dev:led` from the repo root), or call directly:
+2. Open <http://192.168.4.1/> — the embedded web UI loads directly from the ESP (no laptop, no npm, no separate app needed).
+3. Alternatively, use the `@aufzug/led` Next.js app (`npm run dev:led` from the repo root) for a richer PWA experience with animations, or call the API directly:
 
    ```bash
    # Cycle to "Rollstuhlfahrer" (Strip 1 blue + relay on)
@@ -121,13 +121,25 @@ Strip 3 (relay) only honours `solid` and `blink`; other effect strings fall back
 
 | Method  | Path     | Body                                                    | Effect                              |
 |---------|----------|---------------------------------------------------------|-------------------------------------|
-| GET     | `/`      | —                                                       | Plain-text help                     |
+| GET     | `/`      | —                                                       | Embedded web UI (HTML)              |
+| GET     | `/ui`    | —                                                       | Same embedded web UI (alias)        |
+| GET     | `/help`  | —                                                       | Plain-text API help                 |
 | GET     | `/state` | —                                                       | Current state as JSON               |
 | POST    | `/state` | `{"state":0\|1\|2}`                                     | Apply cycle preset                  |
 | POST    | `/state` | `{"s1_on":true,"s1_color":[r,g,b],"s1_effect":"solid", ...}` | Independent per-strip control |
 | OPTIONS | `/state` | —                                                       | CORS preflight (handled)            |
 
 CORS is enabled (`Access-Control-Allow-Origin: *`), so the Next.js app can POST directly from the browser.
+
+## Two UI options
+
+The firmware supports two independent front-ends that coexist:
+
+1. **Embedded web UI** (default, zero-setup): open `http://192.168.4.1/` in any phone browser. The full UI is served from the ESP's flash — no laptop, no npm, no separate app. Covers all features: cycle button, individual strip controls, effects, brightness, LED count. Served from `ui.h` (~13 KB of HTML/CSS/JS stored in PROGMEM).
+
+2. **Next.js PWA** (`led_control_ui/`): run `npm run dev:led` on a laptop for a richer experience with Framer Motion animations, Tailwind styling, and PWA install. Talks to the same `/state` endpoint over HTTP.
+
+Both can be used interchangeably — changes made in one are immediately reflected in the other since state lives on the ESP.
 
 ## Configuration constants (top of `led-controller.ino`)
 

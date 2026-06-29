@@ -26,6 +26,7 @@
 #include <WiFi.h>
 #include <WebServer.h>
 #include <Adafruit_NeoPixel.h>
+#include "ui.h"
 
 // --- User config ---------------------------------------------------------
 static const char* AP_SSID     = "Aufzug-Demo";
@@ -354,9 +355,15 @@ void handleCors() {
   server.send(204);
 }
 
-void handleRoot() {
+void handleUI() {
+  server.sendHeader("Access-Control-Allow-Origin", "*");
+  server.send_P(200, "text/html", UI_HTML);
+}
+
+void handleHelp() {
   server.send(200, "text/plain",
     "Aufzug-Demo LED controller (3-Strip)\r\n"
+    "GET  /ui       — embedded web UI (phone-friendly)\r\n"
     "POST /state {\"state\":0|1|2}                 — 0=alles aus / 1=Kein Bedarf (Querstreifen) / 2=Rollstuhlfahrer (Umrandung+Symbol)\r\n"
     "POST /state {\"s1_on\":...,\"s2_on\":...,\"s3_on\":...,...}\r\n"
     "GET  /state                                — Zustand lesen\r\n");
@@ -394,7 +401,9 @@ void setup() {
   Serial.print("AP IP: ");
   Serial.println(WiFi.softAPIP());
 
-  server.on("/",        HTTP_GET,     handleRoot);
+  server.on("/",        HTTP_GET,     handleUI);
+  server.on("/ui",      HTTP_GET,     handleUI);
+  server.on("/help",     HTTP_GET,     handleHelp);
   server.on("/state",   HTTP_GET,     sendStatus);
   server.on("/state",   HTTP_POST,    handleState);
   server.on("/state",   HTTP_OPTIONS, handleCors);
