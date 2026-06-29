@@ -12,12 +12,11 @@ A phone-friendly web UI drives the prototype over WiFi. An ESP32 runs the strips
 ## Repository layout
 
 ```
-apps/
+ui_exploration/
 ├── alt/                # @aufzug/alt — UI exploration: accessibility-detection concept
 ├── mvg/                # @aufzug/mvg — UI exploration: transit-style operator view
-└── led/                # @aufzug/led — LED board prototype controller (this deliverable)
-packages/
 └── shared/             # @aufzug/shared — shared components across the explorations
+led_control_ui/         # @aufzug/led — LED board prototype controller (this deliverable)
 firmware/
 ├── led-controller/     # ESP32 Arduino sketch + PlatformIO config for the LED controller
 └── led-test/           # Tiny standalone sketch to smoke-test a single WS2812B strip
@@ -34,7 +33,7 @@ package.json            # npm workspace root
 | UI       | Next.js PWA (`@aufzug/led`), single-page controller on the phone|
 | Comms    | HTTP POST `/state` with small JSON body (CORS-enabled)          |
 
-See [`firmware/README.md`](firmware/README.md) for wiring + flashing, and [`apps/led/README.md`](apps/led/README.md) for the web UI.
+See [`firmware/README.md`](firmware/README.md) for wiring + flashing, and [`led_control_ui/README.md`](led_control_ui/README.md) for the web UI.
 
 ## Quick start (LED prototype)
 
@@ -59,8 +58,8 @@ The ESP32 boots into "all strips on" so you can immediately verify wiring. Tap t
 
 Before settling on the physical LED board, the team explored two digital interface directions for the same smart-elevator concept. Both are kept here as record of that exploration phase:
 
-- **`apps/alt`** — accessibility-detection concept. A camera-based prototype that detects approaching wheelchair/stroller users and signals queueing etiquette on a phone-style screen.
-- **`apps/mvg`** — transit-style operator view. A dashboard-style UI exploring how an MVG-style operator might see elevator status, crowd level, and accessibility priority in real time.
+- **`ui_exploration/alt`** — accessibility-detection concept. A camera-based prototype that detects approaching wheelchair/stroller users and signals queueing etiquette on a phone-style screen.
+- **`ui_exploration/mvg`** — transit-style operator view. A dashboard-style UI exploring how an MVG-style operator might see elevator status, crowd level, and accessibility priority in real time.
 
 These explorations informed the decision to move the interaction into the physical space (the floor panel) rather than onto a phone screen. They are runnable but not part of the LED board deliverable.
 

@@ -2,16 +2,16 @@
   "name": "aufzug-demo",
   "private": true,
   "workspaces": [
-    "packages/*",
-    "apps/*"
+    "ui_exploration/*",
+    "led_control_ui"
   ],
   "scripts": {
-    "dev:alt": "npm -w apps/alt run dev",
-    "dev:mvg": "npm -w apps/mvg run dev",
-    "dev:led": "npm -w apps/led run dev",
-    "build:alt": "npm -w apps/alt run build",
-    "build:mvg": "npm -w apps/mvg run build",
-    "build:led": "npm -w apps/led run build",
-    "lint": "npm -w apps/alt run lint && npm -w apps/mvg run lint && npm -w apps/led run lint"
+    "dev:alt": "npm -w @aufzug/alt run dev",
+    "dev:mvg": "npm -w @aufzug/mvg run dev",
+    "dev:led": "npm -w @aufzug/led run dev",
+    "build:alt": "npm -w @aufzug/alt run build",
+    "build:mvg": "npm -w @aufzug/mvg run build",
+    "build:led": "npm -w @aufzug/led run build",
+    "lint": "npm -w @aufzug/alt run lint && npm -w @aufzug/mvg run lint && npm -w @aufzug/led run lint"
   }
 }

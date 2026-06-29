@@ -33,10 +33,10 @@ Strip 3 (wheelchair symbol, relay) supports only `solid` and `blink` — a relay
 
 ## Configuration
 
-`NEXT_PUBLIC_ESP_URL` — base URL of the ESP32 HTTP server. Defaults to `http://192.168.4.1`, which is the ESP's soft-AP address. Override in `apps/led/.env.local` if you wire the ESP into an existing WiFi instead.
+`NEXT_PUBLIC_ESP_URL` — base URL of the ESP32 HTTP server. Defaults to `http://192.168.4.1`, which is the ESP's soft-AP address. Override in `led_control_ui/.env.local` if you wire the ESP into an existing WiFi instead.
 
 ```bash
-cp apps/led/.env.example apps/led/.env.local
+cp led_control_ui/.env.example led_control_ui/.env.local
 # edit .env.local if needed
 ```
 
@@ -63,7 +63,7 @@ For a classroom demo, install the PWA on the demo phone before the session.
 ## File map
 
 ```
-apps/led/
+led_control_ui/
 ├── public/                 # PWA manifest + icons
 ├── src/
 │   ├── app/
