@@ -1,6 +1,6 @@
 /*
  * ui.h — Embedded web UI for the LED controller.
- * Served at /ui by the ESP32. Single-page vanilla HTML/CSS/JS,
+ * Served at / and /ui by the ESP32. Single-page vanilla HTML/CSS/JS,
  * no external dependencies. Talks to the same /state endpoint as
  * the Next.js app (led_control_ui/).
  */
@@ -29,7 +29,6 @@ summary::-webkit-details-marker{display:none}
 summary::before{content:'\203A';font-size:20px;font-weight:700;transition:transform .2s;color:#5a5a5a}
 details[open] summary::before{transform:rotate(90deg)}
 details .body{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
-.hint{font-size:12px;color:#8a8a8a;padding:4px 4px 0}
 .card{background:#fff;border:1px solid #e5e5e5;border-radius:10px;padding:16px;box-shadow:0 1px 2px rgba(0,0,0,.03)}
 .card-h{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
 .card-h .name{font-weight:700;font-size:15px}
@@ -43,9 +42,8 @@ details .body{padding:0 16px 16px;display:flex;flex-direction:column;gap:12px}
 .color-pick{width:40px;height:40px;border:1px solid #d9d9d9;border-radius:6px;cursor:pointer;padding:0;background:none;flex-shrink:0}
 .color-pick:disabled{opacity:.5}
 .effects{display:flex;flex-wrap:wrap;gap:6px;flex:1}
-.effects button{flex:1;min-width:0;padding:6px 8px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:#f0f0f0;color:#5a5a5a;transition:background .15s,color .15s}
+.effects button{flex:1;min-width:60px;padding:6px 8px;border:none;border-radius:6px;font-size:11px;font-weight:600;cursor:pointer;background:#f0f0f0;color:#5a5a5a;transition:background .15s,color .15s}
 .effects button:disabled{opacity:.5;cursor:not-allowed}
-.effects button.active{color:#fff}
 .range-row{display:flex;align-items:center;gap:12px}
 .range-row label{font-weight:700;font-size:15px;white-space:nowrap}
 .range-row .val{font-size:12px;font-weight:600;color:#5a5a5a;font-variant-numeric:tabular-nums}
@@ -67,20 +65,25 @@ footer .raw{display:block;margin-bottom:6px;font-size:11px;font-family:monospace
 
 <button id="cycle" class="cycle" onclick="cycleState()">
 <div class="lbl">AUS</div>
-<div class="sub">Lade…</div>
+<div class="sub">Lade...</div>
 </button>
 
 <details>
 <summary>Individuell</summary>
 <div class="body">
-<p class="hint">Aenderungen hier ueberschreiben den Cycle-Modus. Ein Tippen auf den Cycle-Button setzt wieder die festen Presets.</p>
 <div class="card" id="s1-card" style="--accent:#0068b4">
 <div class="card-h"><span class="name">Strip 1 &mdash; Umrandung</span>
 <label class="toggle"><input type="checkbox" id="s1_on" onchange="toggleStrip(1)"><span class="slider"></span></label>
 </div>
 <div class="controls">
 <input type="color" class="color-pick" id="s1_color" onchange="setStripColor(1,this.value)">
-<div class="effects" id="s1_effects"></div>
+<div class="effects" id="s1_effects">
+<button data-effect="solid" onclick="setStripEffect(1,'solid')">Statisch</button>
+<button data-effect="blink" onclick="setStripEffect(1,'blink')">Blinken</button>
+<button data-effect="fade" onclick="setStripEffect(1,'fade')">Atmen</button>
+<button data-effect="chase" onclick="setStripEffect(1,'chase')">Lauflicht</button>
+<button data-effect="rainbow" onclick="setStripEffect(1,'rainbow')">Regenbogen</button>
+</div>
 </div>
 </div>
 <div class="card" id="s2-card" style="--accent:#f5c842">
@@ -89,7 +92,13 @@ footer .raw{display:block;margin-bottom:6px;font-size:11px;font-family:monospace
 </div>
 <div class="controls">
 <input type="color" class="color-pick" id="s2_color" onchange="setStripColor(2,this.value)">
-<div class="effects" id="s2_effects"></div>
+<div class="effects" id="s2_effects">
+<button data-effect="solid" onclick="setStripEffect(2,'solid')">Statisch</button>
+<button data-effect="blink" onclick="setStripEffect(2,'blink')">Blinken</button>
+<button data-effect="fade" onclick="setStripEffect(2,'fade')">Atmen</button>
+<button data-effect="chase" onclick="setStripEffect(2,'chase')">Lauflicht</button>
+<button data-effect="rainbow" onclick="setStripEffect(2,'rainbow')">Regenbogen</button>
+</div>
 </div>
 </div>
 <div class="card" id="s3-card" style="--accent:#1a1a1a">
@@ -97,9 +106,11 @@ footer .raw{display:block;margin-bottom:6px;font-size:11px;font-family:monospace
 <label class="toggle"><input type="checkbox" id="s3_on" onchange="toggleStrip(3)"><span class="slider"></span></label>
 </div>
 <div class="controls">
-<div class="effects" id="s3_effects"></div>
+<div class="effects" id="s3_effects">
+<button data-effect="solid" onclick="setStripEffect(3,'solid')">Statisch</button>
+<button data-effect="blink" onclick="setStripEffect(3,'blink')">Blinken</button>
 </div>
-<p style="font-size:11px;color:#8a8a8a;margin-top:8px">Schaltstreifen (via Relais) &mdash; nur AN/AUS/Effekt, keine Farbe.</p>
+</div>
 </div>
 </div>
 </details>
@@ -107,7 +118,6 @@ footer .raw{display:block;margin-bottom:6px;font-size:11px;font-family:monospace
 <details>
 <summary>Einstellungen</summary>
 <div class="body">
-<p class="hint">Gelten nur fuer Strip 1 und 2 (WS2812B). Strip 3 ist ein Relais-Streifen ohne digitale LEDs.</p>
 <div class="card">
 <div class="range-row"><label>Helligkeit</label><input type="range" id="brightness" min="0" max="255" onchange="setBrightness(this.value)"><span class="val" id="brightness-val">40/255</span></div>
 </div>
@@ -130,9 +140,6 @@ const SUB={0:'Tippen fuer Kein Bedarf',1:'Querstreifen weiss \u2014 Tippen fuer 
 const BG={0:'#1a1a1a',1:'#f5c842',2:'#0068b4'};
 const FG={0:'#fff',1:'#5a3e0a',2:'#fff'};
 const ACC=['#0068b4','#f5c842','#1a1a1a'];
-const EFF=[{id:'solid',l:'Statisch'},{id:'blink',l:'Blinken'},{id:'fade',l:'Atmen'},{id:'chase',l:'Lauflicht'},{id:'rainbow',l:'Regenbogen'}];
-const SEFF=[{id:'solid',l:'Statisch'},{id:'blink',l:'Blinken'}];
-const VAL=['solid','blink','fade','chase','rainbow'];
 let st={state:1,brightness:40,numPixels:1000,s1:{on:true,color:[0,0,255],effect:'solid'},s2:{on:true,color:[255,255,255],effect:'solid'},s3:{on:true,color:[0,0,0],effect:'solid'}};
 let busy=false;
 
@@ -145,9 +152,7 @@ function norm(d){
   var n=typeof d.numPixels==='number'&&d.numPixels>0?d.numPixels:1000;
   function mk(k,fb){
     var src=d[k]||{};
-    var e=src.effect||fb.effect;
-    if(VAL.indexOf(e)<0)e='solid';
-    return{on:typeof src.on==='boolean'?src.on:fb.on,color:Array.isArray(src.color)&&src.color.length===3?src.color.map(function(x){return x|0}):fb.color,effect:e};
+    return{on:typeof src.on==='boolean'?src.on:fb.on,color:Array.isArray(src.color)&&src.color.length===3?src.color.map(function(x){return x|0}):fb.color,effect:src.effect||fb.effect};
   }
   return{state:s,brightness:b,numPixels:n,s1:mk('s1',{on:true,color:[0,0,255],effect:'solid'}),s2:mk('s2',{on:true,color:[255,255,255],effect:'solid'}),s3:mk('s3',{on:true,color:[0,0,0],effect:'solid'})};
 }
@@ -180,47 +185,12 @@ function conn(type,text){
   t.textContent=text;
 }
 
-function cycleState(){
-  var next=(st.state+1)%3;
-  send({state:next});
-}
-
-function toggleStrip(n){
-  var on=!st['s'+n].on;
-  send({'s'+n+'_on':on});
-}
-
-function setStripColor(n,hex){
-  send({'s'+n+'_color':hex2rgb(hex)});
-}
-
-function setStripEffect(n,effect){
-  send({'s'+n+'_effect':effect});
-}
-
-function setBrightness(v){
-  send({brightness:parseInt(v,10)});
-}
-
-function setNumPixels(v){
-  var n=parseInt(v,10);
-  if(!isNaN(n)&&n>0)send({numPixels:n});
-}
-
-function buildEffects(containerId,stripNum,effects){
-  var c=document.getElementById(containerId);c.innerHTML='';
-  effects.forEach(function(e){
-    var b=document.createElement('button');
-    b.textContent=e.l;
-    b.dataset.effect=e.id;
-    b.onclick=function(){setStripEffect(stripNum,e.id)};
-    c.appendChild(b);
-  });
-}
-
-buildEffects('s1_effects',1,EFF);
-buildEffects('s2_effects',2,EFF);
-buildEffects('s3_effects',3,SEFF);
+function cycleState(){var next=(st.state+1)%3;send({state:next})}
+function toggleStrip(n){send({'s'+n+'_on':!st['s'+n].on})}
+function setStripColor(n,hex){send({'s'+n+'_color':hex2rgb(hex)})}
+function setStripEffect(n,effect){send({'s'+n+'_effect':effect})}
+function setBrightness(v){send({brightness:parseInt(v,10)})}
+function setNumPixels(v){var n=parseInt(v,10);if(!isNaN(n)&&n>0)send({numPixels:n})}
 
 function render(){
   var cy=document.getElementById('cycle');
@@ -239,14 +209,9 @@ function render(){
       var btns=effContainer.querySelectorAll('button');
       var accent=ACC[n-1];
       for(var i=0;i<btns.length;i++){
-        if(btns[i].dataset.effect===cfg.effect){btns[i].classList.add('active');btns[i].style.background=accent;btns[i].style.color='#fff'}
-        else{btns[i].classList.remove('active');btns[i].style.background='#f0f0f0';btns[i].style.color='#5a5a5a'}
+        if(btns[i].dataset.effect===cfg.effect){btns[i].style.background=accent;btns[i].style.color='#fff'}
+        else{btns[i].style.background='#f0f0f0';btns[i].style.color='#5a5a5a'}
       }
-    }
-    var card=document.getElementById('s'+n+'-card');
-    if(card){
-      var toggle=card.querySelector('.toggle input');
-      if(toggle)toggle.checked=cfg.on;
     }
   }
 
