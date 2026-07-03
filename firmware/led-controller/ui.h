@@ -82,7 +82,8 @@ footer .raw{display:block;margin-bottom:6px;font-size:11px;font-family:monospace
 <button data-effect="blink" onclick="setStripEffect(1,'blink')">Blinken</button>
 <button data-effect="fade" onclick="setStripEffect(1,'fade')">Atmen</button>
 <button data-effect="chase" onclick="setStripEffect(1,'chase')">Lauflicht</button>
-<button data-effect="rainbow" onclick="setStripEffect(1,'rainbow')">Regenbogen</button>
+<button data-effect="rainbow" onclick="setStripEffect(1,'rainbow')">Bunt</button>
+<button data-effect="sparkle" onclick="setStripEffect(1,'sparkle')">Funkeln</button>
 </div>
 </div>
 </div>
@@ -97,7 +98,8 @@ footer .raw{display:block;margin-bottom:6px;font-size:11px;font-family:monospace
 <button data-effect="blink" onclick="setStripEffect(2,'blink')">Blinken</button>
 <button data-effect="fade" onclick="setStripEffect(2,'fade')">Atmen</button>
 <button data-effect="chase" onclick="setStripEffect(2,'chase')">Lauflicht</button>
-<button data-effect="rainbow" onclick="setStripEffect(2,'rainbow')">Regenbogen</button>
+<button data-effect="rainbow" onclick="setStripEffect(2,'rainbow')">Bunt</button>
+<button data-effect="sparkle" onclick="setStripEffect(2,'sparkle')">Funkeln</button>
 </div>
 </div>
 </div>
@@ -135,19 +137,21 @@ Prototyp &mdash; Design Workshop 2
 </footer>
 
 <script>
-const LBL={0:'AUS',1:'Kein Bedarf',2:'Rollstuhlfahrer'};
-const SUB={0:'Tippen fuer Kein Bedarf',1:'Querstreifen weiss \u2014 Tippen fuer Rollstuhlfahrer',2:'Umrandung + Symbol \u2014 Tippen fuer AUS'};
-const BG={0:'#1a1a1a',1:'#f5c842',2:'#0068b4'};
-const FG={0:'#fff',1:'#5a3e0a',2:'#fff'};
-const ACC=['#0068b4','#f5c842','#1a1a1a'];
-let st={state:1,brightness:40,numPixels:1000,s1:{on:true,color:[0,0,255],effect:'solid'},s2:{on:true,color:[255,255,255],effect:'solid'},s3:{on:true,color:[0,0,0],effect:'solid'}};
-let busy=false;
+window.onerror=function(msg,url,line){var d=document.getElementById('conn-text');if(d)d.textContent='JS Fehler: '+msg;return false};
+window.addEventListener('unhandledrejection',function(e){var d=document.getElementById('conn-text');if(d)d.textContent='JS: '+(e.reason&&e.reason.message||e.reason||'Promise error')});
+var LBL={1:'Kein Bedarf',2:'Rollstuhlfahrer'};
+var SUB={1:'Tippen fuer Rollstuhlfahrer',2:'Tippen fuer Kein Bedarf'};
+var BG={1:'#f5c842',2:'#0068b4'};
+var FG={1:'#5a3e0a',2:'#fff'};
+var ACC=['#0068b4','#f5c842','#1a1a1a'];
+var st={state:1,brightness:40,numPixels:1000,s1:{on:true,color:[0,0,255],effect:'solid'},s2:{on:true,color:[255,255,255],effect:'solid'},s3:{on:true,color:[0,0,0],effect:'solid'}};
+var busy=false;
 
 function rgb2hex(a){return'#'+a.map(function(n){return('0'+Math.max(0,Math.min(255,n|0)).toString(16)).slice(-2)}).join('')}
 function hex2rgb(h){var m=/^#([0-9a-f]{2})([0-9a-f]{2})([0-9a-f]{2})$/i.exec(h);return m?[parseInt(m[1],16),parseInt(m[2],16),parseInt(m[3],16)]:[0,0,0]}
 function norm(d){
   if(!d)d={};
-  var s=(d.state===0||d.state===1||d.state===2)?d.state:1;
+  var s=(d.state===1||d.state===2)?d.state:1;
   var b=typeof d.brightness==='number'?d.brightness:40;
   var n=typeof d.numPixels==='number'&&d.numPixels>0?d.numPixels:1000;
   function mk(k,fb){
@@ -157,38 +161,46 @@ function norm(d){
   return{state:s,brightness:b,numPixels:n,s1:mk('s1',{on:true,color:[0,0,255],effect:'solid'}),s2:mk('s2',{on:true,color:[255,255,255],effect:'solid'}),s3:mk('s3',{on:true,color:[0,0,0],effect:'solid'})};
 }
 
-async function fetchState(){
-  try{
-    var r=await fetch('/state');
-    if(!r.ok){conn('err','HTTP '+r.status);return}
-    var d=await r.json();
-    st=norm(d);render();conn('ok','ESP verbunden');
-    document.getElementById('raw').textContent=JSON.stringify(d);
-  }catch(e){conn('err','Getrennt')}
+function setConn(type,text){
+  var c=document.getElementById('conn'),t=document.getElementById('conn-text');
+  if(c)c.className='conn '+(type==='ok'?'ok':type==='err'?'err':'');
+  if(t)t.textContent=text;
 }
 
-async function send(body){
+function fetchState(){
+  try{
+    var r;
+    fetch('/state').then(function(response){
+      if(!response.ok){setConn('err','HTTP '+response.status);return}
+      return response.json();
+    }).then(function(d){
+      if(!d)return;
+      st=norm(d);render();setConn('ok','ESP verbunden');
+      var raw=document.getElementById('raw');if(raw)raw.textContent=JSON.stringify(d);
+    }).catch(function(e){setConn('err','Getrennt')});
+  }catch(e){setConn('err','Getrennt')}
+}
+
+function send(body){
   if(busy)return;
   busy=true;document.getElementById('cycle').disabled=true;
   try{
-    var r=await fetch('/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
-    if(!r.ok){conn('err','HTTP '+r.status);return}
-    var d=await r.json();st=norm(d);render();conn('ok','ESP verbunden');
-    document.getElementById('raw').textContent=JSON.stringify(d);
-  }catch(e){conn('err',e.message||'Fehler')}
+    fetch('/state',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)}).then(function(response){
+      if(!response.ok){setConn('err','HTTP '+response.status);return null}
+      return response.json();
+    }).then(function(d){
+      if(!d)return;
+      st=norm(d);render();setConn('ok','ESP verbunden');
+      var raw=document.getElementById('raw');if(raw)raw.textContent=JSON.stringify(d);
+    }).catch(function(e){setConn('err',e.message||'Fehler')});
+  }catch(e){setConn('err',e.message||'Fehler')}
   finally{busy=false;document.getElementById('cycle').disabled=false}
 }
 
-function conn(type,text){
-  var c=document.getElementById('conn'),t=document.getElementById('conn-text');
-  c.className='conn '+(type==='ok'?'ok':type==='err'?'err':'');
-  t.textContent=text;
-}
-
-function cycleState(){var next=(st.state+1)%3;send({state:next})}
-function toggleStrip(n){send({'s'+n+'_on':!st['s'+n].on})}
-function setStripColor(n,hex){send({'s'+n+'_color':hex2rgb(hex)})}
-function setStripEffect(n,effect){send({'s'+n+'_effect':effect})}
+function cycleState(){var next=(st.state==1?2:1);send({state:next})}
+function toggleStrip(n){var k='s'+n+'_on';send({[k]:!st['s'+n].on})}
+function setStripColor(n,hex){var k='s'+n+'_color';send({[k]:hex2rgb(hex)})}
+function setStripEffect(n,effect){var k='s'+n+'_effect';send({[k]:effect})}
 function setBrightness(v){send({brightness:parseInt(v,10)})}
 function setNumPixels(v){var n=parseInt(v,10);if(!isNaN(n)&&n>0)send({numPixels:n})}
 
@@ -221,6 +233,7 @@ function render(){
   if(np)np.value=st.numPixels;
 }
 
+setConn('','JS geladen — lade Daten...');
 fetchState();
 </script>
 </body>

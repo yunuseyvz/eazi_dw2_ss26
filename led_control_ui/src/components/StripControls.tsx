@@ -2,7 +2,7 @@
 
 import { motion } from 'framer-motion';
 
-export type StripEffect = 'solid' | 'blink' | 'fade' | 'chase' | 'rainbow';
+export type StripEffect = 'solid' | 'blink' | 'fade' | 'chase' | 'rainbow' | 'sparkle';
 export type StripConfig = {
   on: boolean;
   color: [number, number, number];
@@ -14,7 +14,8 @@ const EFFECTS: Array<{ id: StripEffect; label: string }> = [
   { id: 'blink',   label: 'Blinken' },
   { id: 'fade',    label: 'Atmen' },
   { id: 'chase',   label: 'Lauflicht' },
-  { id: 'rainbow', label: 'Regenbogen' },
+  { id: 'rainbow', label: 'Bunt' },
+  { id: 'sparkle', label: 'Funkeln' },
 ];
 
 const SIMPLE_EFFECTS: Array<{ id: StripEffect; label: string }> = [

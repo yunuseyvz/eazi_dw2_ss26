@@ -87,7 +87,7 @@ export default function Home() {
   }, []);
 
   const cycle = useCallback(() => {
-    const next = ((status.state + 1) % 3) as CycleState; // 1→2→0→1
+    const next = (status.state === 1 ? 2 : 1) as CycleState; // 1↔2
     send({ state: next });
   }, [status.state, send]);
 
@@ -99,7 +99,6 @@ export default function Home() {
     if (patch.effect !== undefined)  body[`s${which}_effect`] = patch.effect;
     setStatus((s) => ({
       ...s,
-      state: 0,
       [`s${which}`]: { ...cfg, ...patch },
     } as Status));
     send(body);
@@ -219,10 +218,11 @@ export default function Home() {
 
 function normalize(data: unknown): Status {
   const d = (data ?? {}) as Record<string, unknown>;
-  const s: CycleState = d.state === 0 || d.state === 1 || d.state === 2 ? d.state : 1;
+  const rawState = d.state;
+  const s: CycleState = (rawState === 1 || rawState === 2) ? rawState : 1;
   const brightness = typeof d.brightness === 'number' ? d.brightness : 40;
   const numPixels = typeof d.numPixels === 'number' && d.numPixels > 0 ? d.numPixels : 1000;
-  const VALID: Effect[] = ['solid', 'blink', 'fade', 'chase', 'rainbow'];
+  const VALID: Effect[] = ['solid', 'blink', 'fade', 'chase', 'rainbow', 'sparkle'];
   const makeStrip = (key: 's1' | 's2' | 's3', fallback: StripConfig): StripConfig => {
     const src = (d[key] ?? {}) as Record<string, unknown>;
     const eff = (src.effect as Effect) ?? fallback.effect;

@@ -32,8 +32,8 @@
 static const char* AP_SSID     = "Aufzug-Demo";
 static const char* AP_PASSWORD = "demo1234";
 
-static const int PIN_STRIP1   = 27;   // WS2812B — Umrandung
-static const int PIN_STRIP2   = 26;   // WS2812B — Querstreifen
+static const int PIN_STRIP1   = 26;   // WS2812B — Umrandung
+static const int PIN_STRIP2   = 27;   // WS2812B — Querstreifen
 static const int PIN_RELAY3   = 33;   // Relais für simplen Streifen (Rollstuhl-Symbol)
 static const int NUMPIXELS    = 1000; // ← pro WS2812B-Streifen, anpassen
 static const int DEFAULT_BRIGHTNESS = 40;
@@ -125,22 +125,30 @@ void paintStrip(Adafruit_NeoPixel &strip, const StripCfg &cfg) {
       strip.clear();
     }
   } else if (cfg.effect == "fade") {
-    // Sinus-Atmung: 0 → 255 → 0 in ca. 2 s. Wir mappen animStep (0..255) auf eine Dreieckskurve.
-    uint8_t tri = (step < 128) ? step * 2 : (255 - step) * 2;
-    uint16_t br = (uint16_t) status.brightness * tri / 255;
+    // Sinus-Atmung 0 → 255 → 0 in ca. 1.3 s. Schmaler Sinus für smootheres Atmen.
+    uint8_t phase = step;
+    // 0..255 → sin curve 0..255..0 (nur eine Halbwelle mit Offset)
+    float rad = phase * 0.0617;  // 2*pi/255 ≈ 0.0246, hier doppelt für schnellere Periode
+    float s = sin(rad) * 127.5 + 127.5;
+    uint16_t br = (uint16_t)(status.brightness * s / 255.0);
+    if (br > 255) br = 255;
     strip.setBrightness((uint8_t) br);
     for (int i = 0; i < n; i++) strip.setPixelColor(i, strip.Color(cfg.r, cfg.g, cfg.b));
   } else if (cfg.effect == "chase") {
     strip.setBrightness(status.brightness);
     strip.clear();
-    // "head" läuft von 0 bis n-1, Schweif dahinter
-    int head = step % n;
-    for (int k = 0; k < 3; k++) {
-      int idx = head - k;
-      if (idx < 0) idx += n;
-      uint8_t dim = 255 / (k + 1);
-      uint32_t c = strip.Color((cfg.r * dim) / 255, (cfg.g * dim) / 255, (cfg.b * dim) / 255);
-      strip.setPixelColor(idx, c);
+    // 4 Köpfe, versetzt. Schweif 12 LEDs lang.
+    const int HEADS = 4;
+    const int TAIL = 12;
+    for (int h = 0; h < HEADS; h++) {
+      int head = (step + (h * n / HEADS)) % n;
+      for (int k = 0; k < TAIL; k++) {
+        int idx = head - k;
+        if (idx < 0) idx += n;
+        uint8_t dim = 255 - (k * 255 / TAIL);
+        uint32_t c = strip.Color((cfg.r * dim) / 255, (cfg.g * dim) / 255, (cfg.b * dim) / 255);
+        strip.setPixelColor(idx, c);
+      }
     }
   } else if (cfg.effect == "rainbow") {
     strip.setBrightness(status.brightness);
@@ -149,6 +157,20 @@ void paintStrip(Adafruit_NeoPixel &strip, const StripCfg &cfg) {
       uint8_t rr, gg, bb;
       hsv2rgb(h, 255, 255, rr, gg, bb);
       strip.setPixelColor(i, strip.Color(rr, gg, bb));
+    }
+  } else if (cfg.effect == "sparkle") {
+    // Zufällige LEDs blitzen kurz auf, Rest dunkel. Sternenhimmel.
+    strip.setBrightness(status.brightness);
+    strip.clear();
+    // Pseudo-random: einfacher LCG mit step als seed
+    uint16_t rnd = step * 1103 + 12345;
+    for (int k = 0; k < 5; k++) {
+      rnd = rnd * 1103 + 12345;
+      int idx = rnd % n;
+      rnd = rnd * 1103 + 12345;
+      uint8_t bright = 100 + (rnd % 156);  // 100-255
+      uint32_t c = strip.Color((cfg.r * bright) / 255, (cfg.g * bright) / 255, (cfg.b * bright) / 255);
+      strip.setPixelColor(idx, c);
     }
   } else {
     // unbekannt → aus
@@ -255,8 +277,9 @@ bool parseColorField(const String &body, const char *key, uint8_t &r, uint8_t &g
 }
 
 void sanitizeEffect(String &e) {
-  if (e == "off") e = "solid";   // Abwärtskompatibilität: altes "off" → "solid"
-  if (e != "solid" && e != "blink" && e != "fade" && e != "chase" && e != "rainbow") e = "solid";
+  if (e == "off") e = "solid";
+  if (e != "solid" && e != "blink" && e != "fade" && e != "chase" && e != "rainbow"
+   && e != "sparkle") e = "solid";
 }
 
 const char* stateName(int s) {
@@ -438,12 +461,16 @@ void loop() {
     if (anyBlink) repaintAnimatedStrips();
   }
 
-  // Animation: fade/chase/rainbow — animStep alle 25 ms erhöhen
-  if (now - lastAnim > 25) {
+  // Animation: fade/chase/rainbow/strobe/pulse/bounce/sparkle — animStep alle 20 ms erhöhen
+  if (now - lastAnim > 20) {
     lastAnim = now;
     bool anyAnim = false;
-    if (status.s1.on && (status.s1.effect == "fade" || status.s1.effect == "chase" || status.s1.effect == "rainbow")) anyAnim = true;
-    if (status.s2.on && (status.s2.effect == "fade" || status.s2.effect == "chase" || status.s2.effect == "rainbow")) anyAnim = true;
+    const char* animEffects[] = {"fade","chase","rainbow","sparkle"};
+    int nAnims = sizeof(animEffects) / sizeof(animEffects[0]);
+    for (int i = 0; i < nAnims; i++) {
+      if (status.s1.on && status.s1.effect == animEffects[i]) anyAnim = true;
+      if (status.s2.on && status.s2.effect == animEffects[i]) anyAnim = true;
+    }
     if (anyAnim) {
       animStep++;
       repaintAnimatedStrips();
