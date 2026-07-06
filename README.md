@@ -1,87 +1,103 @@
-# Smart Elevator — Board Prototype (Design Workshop 2)
+<div align="center">
 
-Interactive physical prototype for the **Intelligent Urban Machines** module in *Design Workshop 2*. The project explores a smart elevator system that gently guides waiting passengers and makes bystanders aware of approaching users with accessibility needs.
+# EAZI
+### Elevator Adaptable Zone Indicator
 
-The physical prototype is a wooden floor panel with LED strips inlaid into routed grooves. The strips visualise two situations at the elevator entrance:
+![Demo](assets/demo.gif)
 
-- **Kein Bedarf** — a white cross-strip signals "no specific accessibility need right now".
-- **Rollstuhlfahrer** — a blue border around the panel plus an illuminated wheelchair symbol signal "an elevator user with accessibility needs is approaching — please leave space".
+</div>
 
-A phone-friendly web UI drives the prototype over WiFi. An ESP32 runs the strips directly (no separate server).
+---
+
+## What is EAZI?
+
+**EAZI** is a physical interactive prototype that turns the floor in front of an elevator into a communication surface. Leading Question: How might we prioritize elevator access without becoming intrusive or annoying?
+
+It was built as a *Design Workshop 2* project under the **Intelligent Urban Machines** topic, exploring how everyday urban infrastructure can become quietly aware of the people who use it.
+
+---
+
+## Prototype stack
+
+| Layer        | Tech                                                                       |
+|--------------|----------------------------------------------------------------------------|
+| **Hardware** | 2× WS2812B LED strips · 1× 5 V relay module · 5 V PSU · ESP32              |
+| **Firmware** | Arduino sketch (PlatformIO) · `Adafruit_NeoPixel` · built-in WiFi HTTP     |
+| **Network**  | ESP32 soft AP `Aufzug-Demo`              |
+
+---
+
+## Quick start
+
+**Requirements:** Node.js ≥ 20 · npm ≥ 10 · VS Code + PlatformIO (for flashing)
+
+```bash
+# 1. Install web-app dependencies
+npm install
+
+# 2. Flash the ESP32
+#    Open firmware/led-controller in VS Code → click Upload
+
+# 3. Join the WiFi "Aufzug-Demo" (password: demo1234) on your phone
+
+# 4. Run the controller app
+npm run dev:led
+# → open http://localhost:3000 on your laptop, or the same URL on your phone
+```
+
+The ESP32 boots into **"all strips on"** so wiring can be verified at a glance. Tap the big cycle button to switch through `AUS → Kein Bedarf → Rollstuhlfahrer → AUS`. Open the **Individuell** panel to override each strip's colour, effect and on/off state. Open **Einstellungen** for brightness and LED count.
+
+---
 
 ## Repository layout
 
 ```
-ui_exploration/
-├── alt/                # @aufzug/alt — UI exploration: accessibility-detection concept
-├── mvg/                # @aufzug/mvg — UI exploration: transit-style operator view
-└── shared/             # @aufzug/shared — shared components across the explorations
-led_control_ui/         # @aufzug/led — LED board prototype controller (this deliverable)
-firmware/
-├── led-controller/     # ESP32 Arduino sketch + PlatformIO config for the LED controller
-└── led-test/           # Tiny standalone sketch to smoke-test a single WS2812B strip
-package.json            # npm workspace root
+dw2-testing/
+├── apps/
+├── assets/
+│   └── demo.gif            # animated preview (used in this README)
+├── firmware/
+│   ├── led-controller/     # ESP32 Arduino sketch + PlatformIO config
+│   └── led-test/           # tiny standalone sketch to smoke-test one WS2812B strip
+├── led_control_ui/         # @aufzug/led — LED board controller PWA (this deliverable)
+├── ui_exploration/
+│   ├── alt/                # @aufzug/alt — accessibility-detection concept
+│   ├── mvg/                # @aufzug/mvg — transit-style operator view
+│   └── shared/             # @aufzug/shared — shared UI components
+└── package.json            # npm workspace root
 ```
 
-## Prototype stack
+---
 
-| Layer    | Tech                                                            |
-|----------|----------------------------------------------------------------|
-| Hardware | 2× WS2812B LED strips, 1× 5 V relay module, 5 V PSU, ESP32      |
-| Firmware | Arduino sketch (PlatformIO), `Adafruit_NeoPixel`, built-in WiFi HTTP server |
-| Network  | ESP32 soft AP `Aufzug-Demo` (no router / eduroam needed)        |
-| UI       | Next.js PWA (`@aufzug/led`), single-page controller on the phone|
-| Comms    | HTTP POST `/state` with small JSON body (CORS-enabled)          |
+## Early UI explorations
 
-See [`firmware/README.md`](firmware/README.md) for wiring + flashing, and [`led_control_ui/README.md`](led_control_ui/README.md) for the web UI.
+Before committing to the floor panel, the team explored two digital interface directions for the same idea. They're kept in the repo as a record of the process:
 
-## Quick start (LED prototype)
+- **`ui_exploration/alt`** — *Accessibility-detection concept.* A camera-based prototype that detects approaching wheelchair / stroller users and signals queueing etiquette on a phone-style screen.
+- **`ui_exploration/mvg`** — *Transit-style operator view.* A dashboard-style UI exploring how an MVG-style operator might monitor elevator status, crowd level and accessibility priority in real time.
 
-Requirements: Node.js ≥ 20 / npm ≥ 10; VS Code + PlatformIO for flashing.
+These explorations led directly to the decision to **move the interaction out of the phone and into the floor**. They're runnable, but are not part of the LED-board deliverable.
 
-```bash
-# 1. install web-app deps
-npm install
-
-# 2. flash the ESP32 (open firmware/led-controller in VS Code, click Upload)
-
-# 3. join the WiFi "Aufzug-Demo" / password "demo1234" on your phone
-
-# 4. run the controller app
-npm run dev:led
-# open http://localhost:3000 on your laptop, or the same URL on your phone
-```
-
-The ESP32 boots into "all strips on" so you can immediately verify wiring. Tap the big cycle button to switch between **AUS → Kein Bedarf → Rollstuhlfahrer → AUS**. Open the *Individuell* panel to override each strip's colour, effect, and on/off independently. Open *Einstellungen* for brightness and LED count.
-
-## Early UI exploration (alt & mvg)
-
-Before settling on the physical LED board, the team explored two digital interface directions for the same smart-elevator concept. Both are kept here as record of that exploration phase:
-
-- **`ui_exploration/alt`** — accessibility-detection concept. A camera-based prototype that detects approaching wheelchair/stroller users and signals queueing etiquette on a phone-style screen.
-- **`ui_exploration/mvg`** — transit-style operator view. A dashboard-style UI exploring how an MVG-style operator might see elevator status, crowd level, and accessibility priority in real time.
-
-These explorations informed the decision to move the interaction into the physical space (the floor panel) rather than onto a phone screen. They are runnable but not part of the LED board deliverable.
+---
 
 ## Scripts
 
-| Command                | What it does                                   |
-|------------------------|------------------------------------------------|
-| `npm install`          | install deps across all workspaces              |
-| `npm run dev:led`      | start the LED controller PWA on port 3000       |
-| `npm run build:led`    | production build of `@aufzug/led`               |
-| `npm run lint`         | lint all apps                                   |
-| `npm run dev:alt`      | run the ALT UI exploration                       |
-| `npm run dev:mvg`      | run the MVG UI exploration                       |
+| Command             | What it does                                |
+|---------------------|---------------------------------------------|
+| `npm install`       | install deps across all workspaces          |
+| `npm run dev:led`   | start the LED controller PWA on port 3000   |
+| `npm run build:led` | production build of `@aufzug/led`           |
+| `npm run dev:alt`   | run the ALT UI exploration                  |
+| `npm run dev:mvg`   | run the MVG UI exploration                  |
+| `npm run lint`      | lint all apps                               |
+
+---
 
 ## Course context
 
-- **Module**: Design Workshop 2
-- **Topic**: Intelligent Urban Machines
-- **Team-project question**: how can an elevator communicate queueing etiquette and accessibility awareness *before* its doors open?
-- **Physical prototype**: wooden floor panel with inlaid WS2812B strips + a backlit wheelchair icon, switched by an ESP32.
-- **Interaction**: phone-style web UI to cycle through the situations and to demo individual strip effects.
+- **Module** — Design Workshop 2
+- **Topic** — Intelligent Urban Machines
+- **Driving question** — _How can an elevator communicate queueing etiquette and accessibility awareness **before** its doors open?_
+- **Form** — A wooden floor panel with inlaid WS2812B strips and a backlit wheelchair icon, switched by an ESP32 and driven by a phone-style web UI.
 
-## License
-
-Coursework — not distributed. All third-party libraries retain their licenses (see `package.json` files and `platformio.ini`).
+---
