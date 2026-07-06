@@ -5,7 +5,7 @@ Arduino sketch for the smart-elevator board prototype. The ESP32 hosts a WiFi so
 ## Hardware
 
 - **Board**: any ESP32 dev module (ESP32-WROOM, -S3, etc.).
-- **Two WS2812B strips** (3-wire: 5V / GND / DIN) — Strip 1 (Umrandung), Strip 2 (Querstreifen).
+- **Two WS2812B strips** (3-wire: 5V / GND / DIN) — Strip 1 (Querstreifen), Strip 2 (Umrandung).
 - **One 5 V relay module** (e.g. Berrybase HLRELM-1) switching a simple LED strip for the wheelchair symbol (Strip 3).
 - **5 V PSU** rated for the *combined* current of all strips: ~60 mA per WS2812B LED at full white → LEDs × 0.06 A × 1.2. The relay strip adds its own current.
 
@@ -45,7 +45,7 @@ Relay IN             ── ESP GPIO 33
 ### If the upload errors with "Unable to verify flash chip connection"
 
 - Disconnect LED strip 5 V during upload (inrush current browns out the ESP).
-- Lower `upload_speed` in `platformio.ini` to `460800` or `115200`.
+- Lower `upload_speed` in `platformio.ini` to `460800` or `115200` (CH340 on some macOS setups is unstable above 460800).
 - Use a data-rated USB cable, plug directly into the laptop (not a hub).
 - Hold the **BOOT** button while clicking Upload; release once you see `Connecting...`.
 
@@ -57,11 +57,11 @@ On power-up the firmware sets **all three strips on** (Strip 1 blue, Strip 2 whi
 
 **Cycle preset** (`state`): mutually exclusive presets the big UI button uses.
 
-| `state` | Strip 1 (Umrandung)   | Strip 2 (Querstreifen) | Strip 3 (wheelchair relay) |
+| `state` | Strip 1 (Querstreifen)| Strip 2 (Umrandung)    | Strip 3 (wheelchair relay) |
 |---------|------------------------|------------------------|----------------------------|
 | `0`     | OFF                    | OFF                    | OFF                        |
-| `1`     | OFF                    | ON, white              | OFF                        |
-| `2`     | ON, blue               | OFF                    | ON                         |
+| `1`     | ON, green              | OFF                    | OFF                        |
+| `2`     | OFF                    | ON, blue               | ON                         |
 
 State labels in the UI: `0 = AUS`, `1 = Kein Bedarf`, `2 = Rollstuhlfahrer`.
 
@@ -153,7 +153,7 @@ Both can be used interchangeably — changes made in one are immediately reflect
 | `NUMPIXELS`          | `1000`  | Initial LED count per WS2812B strip (runtime-tunable) |
 | `DEFAULT_BRIGHTNESS` | `40`    | Safe-for-USB brightness on first boot                |
 | `INVERT_RELAY`       | `false` | `false` = active-HIGH relay, `true` = active-LOW     |
-| `STATE1_R/G/B`       | `255,255,255` | Cycle state 1 colour (white Querstreifen)       |
+| `STATE1_R/G/B`       | `0,255,0`      | Cycle state 1 colour (green Querstreifen)         |
 | `STATE2_R/G/B`       | `0,0,255`      | Cycle state 2 colour (blue Umrandung)            |
 
 The WS2812B strip colour order is configured in the `Adafruit_NeoPixel` constructor (`NEO_RGB` in this build). If colours come out wrong after wiring a new strip, try `NEO_GRB` instead.

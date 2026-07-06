@@ -71,8 +71,8 @@ footer .raw{display:block;margin-bottom:6px;font-size:11px;font-family:monospace
 <details>
 <summary>Individuell</summary>
 <div class="body">
-<div class="card" id="s1-card" style="--accent:#0068b4">
-<div class="card-h"><span class="name">Strip 1 &mdash; Umrandung</span>
+<div class="card" id="s1-card" style="--accent:#f5c842">
+<div class="card-h"><span class="name">Strip 1 &mdash; Querstreifen</span>
 <label class="toggle"><input type="checkbox" id="s1_on" onchange="toggleStrip(1)"><span class="slider"></span></label>
 </div>
 <div class="controls">
@@ -87,8 +87,8 @@ footer .raw{display:block;margin-bottom:6px;font-size:11px;font-family:monospace
 </div>
 </div>
 </div>
-<div class="card" id="s2-card" style="--accent:#f5c842">
-<div class="card-h"><span class="name">Strip 2 &mdash; Querstreifen</span>
+<div class="card" id="s2-card" style="--accent:#0068b4">
+<div class="card-h"><span class="name">Strip 2 &mdash; Umrandung</span>
 <label class="toggle"><input type="checkbox" id="s2_on" onchange="toggleStrip(2)"><span class="slider"></span></label>
 </div>
 <div class="controls">
@@ -143,8 +143,8 @@ var LBL={1:'Kein Bedarf',2:'Rollstuhlfahrer'};
 var SUB={1:'Tippen fuer Rollstuhlfahrer',2:'Tippen fuer Kein Bedarf'};
 var BG={1:'#f5c842',2:'#0068b4'};
 var FG={1:'#5a3e0a',2:'#fff'};
-var ACC=['#0068b4','#f5c842','#1a1a1a'];
-var st={state:1,brightness:40,numPixels:1000,s1:{on:true,color:[0,0,255],effect:'solid'},s2:{on:true,color:[255,255,255],effect:'solid'},s3:{on:true,color:[0,0,0],effect:'solid'}};
+var ACC=['#f5c842','#0068b4','#1a1a1a'];
+var st={state:1,brightness:40,numPixels:1000,s1:{on:true,color:[0,255,0],effect:'solid'},s2:{on:true,color:[0,0,255],effect:'solid'},s3:{on:true,color:[0,0,0],effect:'solid'}};
 var busy=false;
 
 function rgb2hex(a){return'#'+a.map(function(n){return('0'+Math.max(0,Math.min(255,n|0)).toString(16)).slice(-2)}).join('')}
@@ -158,7 +158,7 @@ function norm(d){
     var src=d[k]||{};
     return{on:typeof src.on==='boolean'?src.on:fb.on,color:Array.isArray(src.color)&&src.color.length===3?src.color.map(function(x){return x|0}):fb.color,effect:src.effect||fb.effect};
   }
-  return{state:s,brightness:b,numPixels:n,s1:mk('s1',{on:true,color:[0,0,255],effect:'solid'}),s2:mk('s2',{on:true,color:[255,255,255],effect:'solid'}),s3:mk('s3',{on:true,color:[0,0,0],effect:'solid'})};
+  return{state:s,brightness:b,numPixels:n,s1:mk('s1',{on:true,color:[0,255,0],effect:'solid'}),s2:mk('s2',{on:true,color:[0,0,255],effect:'solid'}),s3:mk('s3',{on:true,color:[0,0,0],effect:'solid'})};
 }
 
 function setConn(type,text){

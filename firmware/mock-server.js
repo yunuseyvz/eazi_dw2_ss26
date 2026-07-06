@@ -32,8 +32,8 @@ let state = {
   state: 1,
   brightness: 40,
   numPixels: 1000,
-  s1: { on: true, color: [0, 0, 255], effect: 'solid' },
-  s2: { on: true, color: [255, 255, 255], effect: 'solid' },
+  s1: { on: true, color: [0, 255, 0], effect: 'solid' },
+  s2: { on: true, color: [0, 0, 255], effect: 'solid' },
   s3: { on: true, color: [0, 0, 0], effect: 'solid' },
 };
 
@@ -48,16 +48,16 @@ function sanitizeEffect(e, simple) {
 function applyCycle(s) {
   state.state = s;
   if (s === 1) {
-    state.s1 = { on: false, color: [0, 0, 255], effect: 'solid' };
-    state.s2 = { on: true, color: [255, 255, 255], effect: 'solid' };
+    state.s1 = { on: true, color: [0, 255, 0], effect: 'solid' };
+    state.s2 = { on: false, color: [0, 0, 255], effect: 'solid' };
     state.s3 = { on: false, color: [0, 0, 0], effect: 'solid' };
   } else if (s === 2) {
-    state.s1 = { on: true, color: [0, 0, 255], effect: 'solid' };
-    state.s2 = { on: false, color: [255, 255, 255], effect: 'solid' };
+    state.s1 = { on: false, color: [0, 255, 0], effect: 'solid' };
+    state.s2 = { on: true, color: [0, 0, 255], effect: 'solid' };
     state.s3 = { on: true, color: [0, 0, 0], effect: 'solid' };
   } else {
-    state.s1 = { on: false, color: [0, 0, 255], effect: 'solid' };
-    state.s2 = { on: false, color: [255, 255, 255], effect: 'solid' };
+    state.s1 = { on: false, color: [0, 255, 0], effect: 'solid' };
+    state.s2 = { on: false, color: [0, 0, 255], effect: 'solid' };
     state.s3 = { on: false, color: [0, 0, 0], effect: 'solid' };
   }
 }

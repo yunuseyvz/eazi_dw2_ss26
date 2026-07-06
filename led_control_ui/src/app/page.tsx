@@ -24,8 +24,8 @@ const DEFAULT_STATUS: Status = {
   state: 1,
   brightness: 40,
   numPixels: 1000,
-  s1: { on: true, color: [0, 0, 255],     effect: 'solid' },
-  s2: { on: true, color: [255, 255, 255], effect: 'solid' },
+  s1: { on: true, color: [0, 255, 0],     effect: 'solid' },
+  s2: { on: true, color: [0, 0, 255],     effect: 'solid' },
   s3: { on: true, color: [0, 0, 0],       effect: 'solid' },
 };
 
@@ -129,14 +129,14 @@ export default function Home() {
           <div className="p-4 pt-0 flex flex-col gap-3">
             <StripControls
               id={1}
-              label="Strip 1 — Umrandung"
+              label="Strip 1 — Querstreifen"
               cfg={status.s1}
               disabled={busy}
               onChange={(p) => updateStrip(1, p)}
             />
             <StripControls
               id={2}
-              label="Strip 2 — Querstreifen"
+              label="Strip 2 — Umrandung"
               cfg={status.s2}
               disabled={busy}
               onChange={(p) => updateStrip(2, p)}
@@ -238,8 +238,8 @@ function normalize(data: unknown): Status {
     state: s,
     brightness,
     numPixels,
-    s1: makeStrip('s1', { on: true,  color: [0, 0, 255],     effect: 'solid' }),
-    s2: makeStrip('s2', { on: true,  color: [255, 255, 255], effect: 'solid' }),
+    s1: makeStrip('s1', { on: true,  color: [0, 255, 0],     effect: 'solid' }),
+    s2: makeStrip('s2', { on: true,  color: [0, 0, 255],     effect: 'solid' }),
     s3: makeStrip('s3', { on: true,  color: [0, 0, 0],       effect: 'solid' }),
   };
 }

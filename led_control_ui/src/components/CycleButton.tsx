@@ -10,12 +10,12 @@ const LABELS: Record<CycleState, string> = {
 };
 
 const SUBLABELS: Record<CycleState, string> = {
-  1: 'Querstreifen weiss — Tippen fuer Rollstuhlfahrer',
-  2: 'Umrandung + Symbol — Tippen fuer Kein Bedarf',
+  1: 'Querstreifen grün — Tippen fuer Rollstuhlfahrer',
+  2: 'Umrandung blau + Symbol — Tippen fuer Kein Bedarf',
 };
 
 const COLORS: Record<CycleState, string> = {
-  1: '#f5c842',
+  1: '#22c55e',
   2: '#0068b4',
 };
 

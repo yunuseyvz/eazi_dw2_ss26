@@ -9,8 +9,8 @@ The app shows a single big **cycle button** that walks through the three situati
 | State | Label in UI         | What lights up on the board                        |
 |-------|---------------------|----------------------------------------------------|
 | `0`   | AUS                 | everything off                                      |
-| `1`   | Kein Bedarf         | Strip 2 (Querstreifen) white                        |
-| `2`   | Rollstuhlfahrer     | Strip 1 (Umrandung) blue + Strip 3 (wheelchair symbol via relay) |
+| `1`   | Kein Bedarf         | Strip 1 (Querstreifen) green                       |
+| `2`   | Rollstuhlfahrer     | Strip 2 (Umrandung) blue + Strip 3 (wheelchair symbol via relay) |
 
 Two collapsible panels underneath:
 
@@ -19,7 +19,7 @@ Two collapsible panels underneath:
 
 ## Effects
 
-For the two WS2812B strips (`Strip 1` Umrandung, `Strip 2` Querstreifen):
+For the two WS2812B strips (`Strip 1` Querstreifen, `Strip 2` Umrandung):
 
 | Effect     | Label       | Behaviour                                              |
 |------------|-------------|--------------------------------------------------------|
@@ -90,8 +90,8 @@ The app sends `POST /state` with any of these fields (all optional — only chan
 { "state": 0 | 1 | 2 }                       // cycle preset
 { "brightness": 120 }                        // 0–255, applies to both WS2812B strips
 { "numPixels": 60 }                          // LED count per WS2812B strip (runtime)
-{ "s1_on": true, "s1_color": [0,0,255], "s1_effect": "solid" }   // Strip 1
-{ "s2_on": true, "s2_color": [255,255,255], "s2_effect": "fade" } // Strip 2
+{ "s1_on": true, "s1_color": [0,255,0], "s1_effect": "solid" }   // Strip 1
+{ "s2_on": true, "s2_color": [0,0,255], "s2_effect": "fade" } // Strip 2
 { "s3_on": true, "s3_effect": "solid" }     // Strip 3 (relay, no colour)
 ```
 

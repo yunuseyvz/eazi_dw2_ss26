@@ -4,8 +4,8 @@
  *
  * Zustände (Cycle):
  *   0 = alles AUS
- *   1 = Strip 1 (Umrandung, blau) + Strip 3 (Rollstuhl-Symbol, via Relais) AN, Strip 2 AUS
- *   2 = Strip 2 (Querstreifen, weiß) AN, Strip 1 + 3 AUS
+ *   1 = Strip 1 (Querstreifen, grün) AN, Strip 2 + 3 AUS            → Kein Bedarf
+ *   2 = Strip 2 (Umrandung, blau) + Strip 3 (Rollstuhl-Symbol) AN   → Rollstuhlfahrer
  *
  * POST /state Body (alle Felder optional):
  *   {"state":0|1|2}                                  -> Cycle-Preset
@@ -32,8 +32,8 @@
 static const char* AP_SSID     = "Aufzug-Demo";
 static const char* AP_PASSWORD = "demo1234";
 
-static const int PIN_STRIP1   = 26;   // WS2812B — Umrandung
-static const int PIN_STRIP2   = 27;   // WS2812B — Querstreifen
+static const int PIN_STRIP1   = 27;   // WS2812B — Querstreifen
+static const int PIN_STRIP2   = 26;   // WS2812B — Umrandung
 static const int PIN_RELAY3   = 33;   // Relais für simplen Streifen (Rollstuhl-Symbol)
 static const int NUMPIXELS    = 1000; // ← pro WS2812B-Streifen, anpassen
 static const int DEFAULT_BRIGHTNESS = 40;
@@ -42,14 +42,15 @@ static const int DEFAULT_BRIGHTNESS = 40;
 // Bei active-LOW (Relais zieht bei LOW) auf true setzen.
 static const bool INVERT_RELAY = false;
 
-static const uint8_t STATE1_R = 255, STATE1_G = 255, STATE1_B = 255; // weiß (Querstreifen, Kein Bedarf)
+static const uint8_t STATE1_R =   0, STATE1_G = 255, STATE1_B =   0; // grün (Querstreifen, Kein Bedarf)
 static const uint8_t STATE2_R =   0, STATE2_G =   0, STATE2_B = 255; // blau (Umrandung, Rollstuhlfahrer)
 // -------------------------------------------------------------------------
 
 WebServer server(80);
 
-Adafruit_NeoPixel strip1(NUMPIXELS, PIN_STRIP1, NEO_RGB + NEO_KHZ800);
-Adafruit_NeoPixel strip2(NUMPIXELS, PIN_STRIP2, NEO_RGB + NEO_KHZ800);
+// Beide WS2812B-Streifen verwenden NEO_GRB.
+Adafruit_NeoPixel strip1(NUMPIXELS, PIN_STRIP1, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip2(NUMPIXELS, PIN_STRIP2, NEO_GRB + NEO_KHZ800);
 
 struct StripCfg {
   bool on = false;
@@ -195,14 +196,14 @@ void applyState() {
 void applyCycle(int s) {
   status.state = s;
   if (s == 1) {
-    // State 1: Kein Bedarf — Querstreifen (Strip 2) weiß AN, Rest AUS
-    status.s1.on = false; status.s1.effect = "solid";
-    status.s2.on = true;  status.s2.r = STATE1_R; status.s2.g = STATE1_G; status.s2.b = STATE1_B; status.s2.effect = "solid";
+    // State 1: Kein Bedarf — Querstreifen (Strip 1) grün AN, Rest AUS
+    status.s1.on = true;  status.s1.r = STATE1_R; status.s1.g = STATE1_G; status.s1.b = STATE1_B; status.s1.effect = "solid";
+    status.s2.on = false; status.s2.effect = "solid";
     status.s3.on = false; status.s3.effect = "solid";
   } else if (s == 2) {
-    // State 2: Rollstuhlfahrer — Umrandung (Strip 1) blau + Relais (Strip 3) AN, Querstreifen AUS
-    status.s1.on = true;  status.s1.r = STATE2_R; status.s1.g = STATE2_G; status.s1.b = STATE2_B; status.s1.effect = "solid";
-    status.s2.on = false; status.s2.effect = "solid";
+    // State 2: Rollstuhlfahrer — Umrandung (Strip 2) blau + Relais (Strip 3) AN, Querstreifen AUS
+    status.s1.on = false; status.s1.effect = "solid";
+    status.s2.on = true;  status.s2.r = STATE2_R; status.s2.g = STATE2_G; status.s2.b = STATE2_B; status.s2.effect = "solid";
     status.s3.on = true;  status.s3.effect = "solid";
   } else {
     status.s1.on = false; status.s1.effect = "solid";
@@ -283,8 +284,8 @@ void sanitizeEffect(String &e) {
 }
 
 const char* stateName(int s) {
-  if (s == 1) return "State 1: Kein Bedarf (Querstreifen)";
-  if (s == 2) return "State 2: Rollstuhlfahrer (Umrandung + Symbol)";
+  if (s == 1) return "State 1: Kein Bedarf (Querstreifen grün)";
+  if (s == 2) return "State 2: Rollstuhlfahrer (Umrandung blau + Symbol)";
   return "State 0: AUS";
 }
 
@@ -293,12 +294,12 @@ void logStatus() {
   Serial.print("Zustand: "); Serial.println(stateName(status.state));
   Serial.print("Helligkeit: "); Serial.println(status.brightness);
   Serial.print("numPixels: "); Serial.println(status.numPixels);
-  Serial.print("Strip 1 (Umrandung):   ");
+  Serial.print("Strip 1 (Querstreifen):");
   if (status.s1.on) {
     Serial.print("AN  Farbe="); Serial.print(status.s1.r); Serial.print(","); Serial.print(status.s1.g); Serial.print(","); Serial.print(status.s1.b);
     Serial.print("  Effekt="); Serial.println(status.s1.effect);
   } else { Serial.println("AUS"); }
-  Serial.print("Strip 2 (Querstreifen):");
+  Serial.print("Strip 2 (Umrandung):   ");
   if (status.s2.on) {
     Serial.print(" AN  Farbe="); Serial.print(status.s2.r); Serial.print(","); Serial.print(status.s2.g); Serial.print(","); Serial.print(status.s2.b);
     Serial.print("  Effekt="); Serial.println(status.s2.effect);
@@ -395,13 +396,13 @@ void handleHelp() {
 // Initial-Zustand beim Boot: alle drei Streifen an.
 void applyBootDefault() {
   status.state = 1;
-  // Strip 1: Umrandung blau
+  // Strip 1: Querstreifen weiß
   status.s1.on = true;
-  status.s1.r = STATE2_R; status.s1.g = STATE2_G; status.s1.b = STATE2_B;
+  status.s1.r = STATE1_R; status.s1.g = STATE1_G; status.s1.b = STATE1_B;
   status.s1.effect = "solid";
-  // Strip 2: Querstreifen weiß
+  // Strip 2: Umrandung blau
   status.s2.on = true;
-  status.s2.r = STATE1_R; status.s2.g = STATE1_G; status.s2.b = STATE1_B;
+  status.s2.r = STATE2_R; status.s2.g = STATE2_G; status.s2.b = STATE2_B;
   status.s2.effect = "solid";
   // Strip 3: Rollstuhl-Relais an
   status.s3.on = true;
